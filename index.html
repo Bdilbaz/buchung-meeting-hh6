@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meetingraum - Buchungssystem - Ebene 4</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #F5F5F5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background-color: #84BD22;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Abstand zwischen den Elementen */
+        }
+
+        .btn {
+            padding: 15px 30px; /* Grösse anpassen */
+            font-size: 18px; /* Schriftgröße erhöhen */
+            background-color: #299E8E;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            height: 50px; /* Höhe der Buttons erhöhen */
+        }
+
+        .btn:hover {
+            background-color: #84BD22;
+        }
+
+        .btn-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        .dropdown-content button {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            transition: background-color 0.3s;
+        }
+
+        .dropdown-content button:hover {
+            background-color: #299E8E; /* Moderner Hover-Effekt */
+            color: white; /* Schriftfarbe ändern */
+        }
+
+        .btn-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        select#roomSelect {
+            font-size: 16px;
+            padding: 15px 30px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 100px repeat(5, 1fr);
+            gap: 1px;
+            background-color: #ddd;
+            border: 1px solid #ddd;
+        }
+
+        .calendar-header-cell, .time-cell, .calendar-cell {
+            padding: 10px;
+            background-color: white;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .calendar-header-cell {
+            font-weight: bold;
+            background-color: #299E8E;
+            color: white;
+        }
+
+        .time-cell {
+            font-weight: bold;
+            background-color: #f5f5f5;
+            border-right: 1px solid #ddd;
+        }
+
+        .calendar-cell {
+            height: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border-right: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .calendar-cell:hover {
+            background-color: #f0f0f0;
+        }
+
+        .booked-internal {
+            background-color: #86BB22;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .booked-external {
+            background-color: #299E8E;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Vergrößertes Buchungsmodal */
+        .modal-content {
+            background-color: white;
+            padding: 30px; /* Mehr Platz für Benutzerfreundlichkeit */
+            border-radius: 10px;
+            width: 900px; /* Breitere Sicht für das Buchungsmodal */
+            height: 700px; /* Erhöhte Sicht für das Buchungsmodal */
+            overflow: auto; /* Scrollbar falls notwendig */
+            transform: scale(1.02); /* Leichte Vergrößerung für visuelle Anpassung */
+            transition: transform 0.3s ease; /* Übergang für Vergrößerungsanimation */
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px; /* Größere Polsterung für Benutzerfreundlichkeit */
+            border: 1px solid #ddd;
+            border-radius: 6px; /* Leicht gerundete Ecken */
+            transition: border-color 0.3s; /* Sanfter Übergang beim Hover */
+            margin-right: 0; /* Vorherige Einstellung, um den Abstand (margin) auf der rechten Seite gleich null zu setzen */
+        }
+
+        .form-group input:hover, .form-group select:hover {
+            border-color: #299E8E; /* Farbwechsel beim Hover */
+        }
+
+        .room-info {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .calendar-icon {
+            cursor: pointer;
+            font-size: 48px;
+        }
+
+        .calendar-grid {
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background-color: #FF4C4C;
+            padding: 15px 30px; /* Größe anpassen */
+        }
+
+        .btn-cancel:hover {
+            background-color: #FF0000;
+        }
+
+        .slot-info {
+            text-align: center;
+            display: flex; /* Setze Flexbox zur horizontalen Anordnung */
+            justify-content: space-around; /* Verteile Platz zwischen den Elementen */
+            font-size: 16px; /* Schriftgröße erhöhen */
+            font-family: 'Segoe UI', sans-serif; /* Schriftart */
+            font-weight: bold; /* Schrift fett */
+        }
+
+        .cancel-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cancel-modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+        }
+
+        .cancel-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        /* Buchungsbestätigungsmodal */
+        .confirmation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .confirmation-modal-content {
+            background-color: white;
+            padding: 40px; /* Mehr Platz für Benutzerfreundlichkeit */
+            border-radius: 10px;
+            width: 600px; /* Vergrößerte Breite für das Buchungsmodal */
+            text-align: center; /* Zentrale Ausrichtung der Header-Buchungsdetails */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Schatteneffekt für das Modal */
+        }
+
+        .booking-details {
+            text-align: left; /* Texte linksbündig */
+            margin-top: 20px; /* Abstand oben */
+            font-family: 'Segoe UI', sans-serif; /* Schriftart */
+            font-size: 16px; /* Erhöhte Schriftgröße für bessere Lesbarkeit */
+        }
+
+        /* Buchungsdetails Container */
+        .booking-detail-item {
+            margin: 10px 0; /* Abstand zwischen den einzelnen Buchungsdetails */
+ padding: 10px; /* Mehr Innenabstand für bessere Lesbarkeit */
+            transition: background-color 0.3s;
+        }
+
+        /* Hover-Effekt für Buchungsdetails */
+        .booking-detail-item:hover {
+            background-color: rgba(0, 0, 0, 0.05); /* Leichter Hover-Hintergrund */
+            cursor: pointer; /* Zeiger für Interaktivität */
+            border-radius: 5px; /* Abgerundete Ecken für modernes Design */
+        }
+
+        .booking-details p {
+            margin: 5px 0; /* Abstand zwischen den Nachrichten */
+        }
+
+        /* Moderner Monats- und Jahres-Dropdown */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            padding: 10px; /* Abstand zwischen den Elementen */
+        }
+
+        .dropdown-content button {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            transition: background-color 0.3s;
+        }
+
+        .dropdown-content button:hover {
+            background-color: #299E8E; /* Moderner Hover-Effekt */
+            color: white; /* Schriftfarbe ändern */
+        }
+
+        .btn-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        /* Roter Strich für aktuelles Datum */
+        .current-date {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: red;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Meetingraum - Buchungssystem - Ebene 4</h1>
+    </div>
+    
+    <div class="container">
+        <div class="calendar-header">
+            <div class="calendar-nav">
+                <button class="btn" id="prevWeek">< Vorherige Woche</button>
+                <button class="btn" id="nextWeek">Nächste Woche ></button>
+                <!-- Month Button -->
+                <div class="btn-dropdown">
+                    <button class="btn" id="monthButton">Monat</button>
+                    <div class="dropdown-content" id="monthDropdown">
+                        <!-- Months will be dynamically loaded here -->
+                    </div>
+                </div>
+                <!-- Year Button -->
+                <div class="btn-dropdown">
+                    <button class="btn" id="yearButton">Jahr</button>
+                    <div class="dropdown-content" id="yearDropdown">
+                        <!-- Years up to 2032 -->
+                    </div>
+                </div>
+            </div>
+            <!-- Meetingraum Dropdown -->
+            <div class="calendar-nav">
+                <select id="roomSelect" class="btn">
+                    <option value="1">Meetingraum 1</option>
+                    <option value="2">Meetingraum 2</option>
+                    <option value="3">Meetingraum 3</option>
+                </select>
+                <span class="calendar-icon" id="calendarIcon">📅</span>
+            </div>
+        </div>
+        
+        <div id="calendar" class="calendar-grid">
+            <!-- Calendar will be generated here -->
+        </div>
+        
+        <div class="room-info">
+            <h3>Raumdetails</h3>
+            <p><strong>Maximale Teilnehmerzahl:</strong> <span id="maxParticipants">8</span></p>
+            <p><strong>Ausstattung:</strong> Beamer, Whiteboard, Video-Konferenzsystem</p>
+            <p><strong>Zusätzlich:</strong> Snacks & Getränke verfügbar</p>
+        </div>
+    </div>
+    
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <h2>Termin buchen</h2>
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label for="title">Titel</label>
+                    <input type="text" id="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">E-Mail</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="department">Abteilung</label>
+                    <input type="text" id="department" required>
+                </div>
+                <div class="form-group">
+                    <label for="participants">Teilnehmerzahl</label>
+                    <input type="number" id="participants" min="1" max="20" required>
+                </div>
+                <div class="form-group">
+                    <label for="startTime">Startzeit</label>
+                    <input type="time" id="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="endTime">Endzeit</label>
+                    <input type="time" id="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="type">Buchungstyp</label>
+                    <select id="type">
+                        <option value="internal">Intern</option>
+                        <option value="external">Extern</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Buchen</button>
+                <button type="button" class="btn btn-cancel" onclick="closeModal()">Abbrechen</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Buchungsbestätigungsmodal -->
+    <div id="confirmationModal" class="confirmation-modal">
+        <div class="confirmation-modal-content">
+            <h2>Buchung erfolgreich!</h2>
+            <div class="booking-details" id="bookingDetails"></div>
+            <button class="btn" onclick="closeConfirmationModal()">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Edit Booking Modal -->
+    <div id="editBookingModal" class="modal">
+        <div class="modal-content">
+            <h2>Termin bearbeiten</h2>
+            <form id="editBookingForm">
+                <div class="form-group">
+                    <label for="editTitle">Titel</label>
+                    <input type="text" id="editTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="editName">Name</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEmail">E-Mail</label>
+                    <input type="email" id="editEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDepartment">Abteilung</label>
+                    <input type="text" id="editDepartment" required>
+                </div>
+                <div class="form-group">
+                    <label for="editParticipants">Teilnehmerzahl</label>
+                    <input type="number" id="editParticipants" min="1" max="20" required>
+                </div>
+                <div class="form-group">
+                    <label for="editStartTime">Startzeit</label>
+                    <input type="time" id="editStartTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEndTime">Endzeit</label>
+                    <input type="time" id="editEndTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="editType">Buchungstyp</label>
+                    <select id="editType">
+                        <option value="internal">Intern</option>
+                        <option value="external">Extern</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Ändern</button>
+                <button type="button" class="btn btn-cancel" onclick="closeEditModal()">Abbrechen</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cancellation Modal -->
+    <div id="cancelModal" class="cancel-modal">
+        <div class="cancel-modal-content">
+            <h2>Termin stornieren?</h2>
+            <div class="cancel-buttons">
+                <button class="btn" id="confirmCancel">Ja, Stornieren</button>
+                <button class="btn btn-cancel" id="abortCancel">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        const calendar = document.getElementById('calendar');
+        const bookingModal = document.getElementById('bookingModal');
+        let selectedCell = null; // Um die aktuell ausgewählte Zelle zu speichern
+        let selectedBooking = null; // Um die ausgewählte Buchung für die Bearbeitung zu speichern
+        
+        // Diese Funktion ist für die Initialisierung des Kalenders verantwortlich.
+        function initCalendar() {
+            updateMonthDropdown();
+            updateYearDropdown();
+            generateCalendarGrid();
+            loadBookings(); // Buchungen nur für den aktuell ausgewählten Raum laden
+            updateHeaderButtons();
+            updateRoomDetails(); // Aktualisiere die Rauminformationen
+        }
+
+        // Diese Funktion aktualisiert die Dropdowns für Monate.
+        function updateMonthDropdown() {
+            const monthDropdown = document.getElementById('monthDropdown');
+            monthDropdown.innerHTML = '';
+            for (let month = 0; month < 12; month++) {
+                const button = document.createElement('button');
+                button.innerHTML = new Date(2024, month).toLocaleString('de-DE', { month: 'long' });
+                button.onclick = () => selectMonth(month);
+                monthDropdown.appendChild(button);
+            }
+        }
+
+        // Diese Funktion aktualisiert das Jahr Dropdown.
+        function updateYearDropdown() {
+            const yearDropdown = document.getElementById('yearDropdown');
+            yearDropdown.innerHTML = '';
+            const currentYear = new Date().getFullYear();  // Start mit dem aktuellen Jahr
+            for (let year = currentYear; year <= 2032; year++) {
+                const button = document.createElement('button');
+                button.innerHTML = year;
+                button.onclick = () => selectYear(year);
+                yearDropdown.appendChild(button);
+            }
+        }
+
+        // Diese Funktion behandelt die Monatsauswahl
+        function selectMonth(month) {
+            currentDate.setMonth(month);
+            updateHeaderButtons();
+            initCalendar();
+        }
+
+        // Diese Funktion behandelt die Jahresauswahl
+        function selectYear(year) {
+            currentDate.setFullYear(year);
+            updateHeaderButtons();
+            initCalendar();
+        }
+
+        // Diese Funktion aktualisiert die Headerbuttons für Woche, Monat und Jahr.
+        function updateHeaderButtons() {
+            const startOfWeek = getStartOfWeek(currentDate); // Ermittle den Start der Woche.
+            const endOfWeek = new Date(startOfWeek); // Ende Woche festlegen
+            endOfWeek.setDate(endOfWeek.getDate() + 4);
+
+            const monthYearStr = startOfWeek.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+            const dateRangeStr = `${startOfWeek.getDate()}. - ${endOfWeek.getDate()}. ${monthYearStr}`;
+            
+            document.getElementById('monthButton').textContent = dateRangeStr; // Setze den Monats-Button Text.
+            document.getElementById('yearButton').textContent = currentDate.getFullYear(); // Setze den Jahr-Button Text.
+        }
+
+        // Diese Funktion generiert das Kalenderraster für die Woche.
+        function generateCalendarGrid() {
+            calendar.innerHTML = '';
+            const weekDays = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+            const startOfWeek = getStartOfWeek(currentDate);
+
+            // Wochentagsüberschriften hinzufügen
+            calendar.appendChild(createCell('Zeit', 'calendar-header-cell'));
+            weekDays.forEach((day, index) => {
+                const date = new Date(startOfWeek);
+                date.setDate(date.getDate() + index);
+                const formattedDate = date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'long' });
+                calendar.appendChild(createCell(formattedDate, 'calendar-header-cell'));
+            });
+
+            // Zeitzellen für jede Stunde mit 15 Minuten Intervallen
+            for (let hour = 8; hour <= 19; hour++) {
+                for (let minute of ['00', '15', '30', '45']) {
+                    const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+                    calendar.appendChild(createCell(time, 'time-cell'));
+
+                    for (let day = 0; day < 5; day++) {
+                        const cell = createCell('', 'calendar-cell');
+                        cell.dataset.time = time;
+                        cell.dataset.day = day;
+                        cell.dataset.room = document.getElementById('roomSelect').value; // Aktueller Meetingraum
+                        cell.addEventListener('click', () => openBookingModal(cell, day, time));
+                        calendar.appendChild(cell); // Füge die Zelle zum Kalender hinzu
+                    }
+                }
+            }
+        }
+
+        // Diese Funktion erstellt eine einzelne Zelle für den Kalender.
+        function createCell(content, className) {
+            const cell = document.createElement('div');
+            cell.textContent = content;
+            cell.className = className; // Setze die CSS-Klasse
+            return cell; // Gebe die Zelle zurück
+        }
+
+        // Diese Funktion öffnet das Buchungsmodal.
+        function openBookingModal(cell, day, time) {
+            selectedCell = cell;
+            bookingModal.style.display = 'flex'; // Stelle das Modal dar
+            document.getElementById('startTime').value = time;
+        }
+
+        // Diese Funktion schließt das Buchungsmodal.
+        function closeModal() {
+            bookingModal.style.display = 'none'; // Verstecke das Modal
+ selectedCell = null;
+        }
+
+        // Diese Funktion behandelt das Absenden des Buchungsformulars.
+        function handleBookingFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const booking = {
+                title: formData.get('title'),
+                name: formData.get('name'),
+                email: formData.get('email'),
+                department: formData.get('department'),
+                participants: formData.get('participants'),
+                startTime: formData.get('startTime'),
+                endTime: formData.get('endTime'),
+                type: formData.get('type'),
+                room: document.getElementById('roomSelect').value,
+                day: selectedCell.dataset.day,
+                time: selectedCell.dataset.time,
+            };
+            saveBooking(booking);
+            closeModal();
+        }
+
+        // Diese Funktion speichert die Buchung in der Datenbank.
+        function saveBooking(booking) {
+            // Hier muss die Buchung in der Datenbank gespeichert werden.
+            // In dieser Demo wird die Buchung nur in den Speicher geschrieben.
+            const bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+            bookings.push(booking);
+            localStorage.setItem('bookings', JSON.stringify(bookings));
+            initCalendar();
+        }
+
+        // Diese Funktion lädt die Buchungen aus der Datenbank.
+        function loadBookings() {
+            const bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+            bookings.forEach(booking => {
+                const cell = document.querySelector(`[data-day="${booking.day}"][data-time="${booking.time}"][data-room="${booking.room}"]`);
+                if (cell) {
+                    cell.classList.add(booking.type);
+                    cell.addEventListener('click', () => openEditBookingModal(booking));
+                }
+            });
+        }
+
+        // Diese Funktion öffnet das Buchungsmodal zum Bearbeiten einer Buchung.
+        function openEditBookingModal(booking) {
+            selectedBooking = booking;
+            document.getElementById('editTitle').value = booking.title;
+            document.getElementById('editName').value = booking.name;
+            document.getElementById('editEmail').value = booking.email;
+            document.getElementById('editDepartment').value = booking.department;
+            document.getElementById('editParticipants').value = booking.participants;
+            document.getElementById('editStartTime').value = booking.startTime;
+            document.getElementById('editEndTime').value = booking.endTime;
+            document.getElementById('editType').value = booking.type;
+            document.getElementById('editBookingModal').style.display = 'flex';
+        }
+
+        // Diese Funktion schließt das Buchungsmodal zum Bearbeiten einer Buchung.
+        function closeEditModal() {
+            selectedBooking = null;
+            document.getElementById('editBookingModal').style.display = 'none';
+        }
+
+        // Diese Funktion behandelt das Absenden des Buchungsformulars zum Bearbeiten einer Buchung.
+        function handleEditBookingFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const updatedBooking = {
+                title: formData.get('editTitle'),
+                name: formData.get('editName'),
+                email: formData.get('editEmail'),
+                department: formData.get('editDepartment'),
+                participants: formData.get('editParticipants'),
+                startTime: formData.get('editStartTime'),
+                endTime: formData.get('editEndTime'),
+                type: formData.get('editType'),
+                room: selectedBooking.room,
+                day: selectedBooking.day,
+                time: selectedBooking.time,
+            };
+            updateBooking(updatedBooking);
+            closeEditModal();
+        }
+
+        // Diese Funktion akt ulisiert die Buchung in der Datenbank.
+        function updateBooking(updatedBooking) {
+            // Hier muss die Buchung in der Datenbank aktualisiert werden.
+            // In dieser Demo wird die Buchung nur im Speicher aktualisiert.
+            const bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+            const index = bookings.findIndex(booking => booking.room === updatedBooking.room && booking.day === updatedBooking.day && booking.time === updatedBooking.time);
+            if (index !== -1) {
+                bookings[index] = updatedBooking;
+                localStorage.setItem('bookings', JSON.stringify(bookings));
+                initCalendar();
+            }
+        }
+
+        // Diese Funktion ermittelt den Start der Woche basierend auf dem Datum.
+        function getStartOfWeek(date) {
+            const tempDate = new Date(date);
+            const day = tempDate.getDay();
+            const diff = tempDate.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(tempDate.setDate(diff));
+        }
+
+        // Event Listener für das Buchungsformular
+        document.getElementById('bookingForm').addEventListener('submit', handleBookingFormSubmit);
+
+        // Event Listener für das Buchungsformular zum Bearbeiten einer Buchung
+        document.getElementById('editBookingForm').addEventListener('submit', handleEditBookingFormSubmit);
+
+        // Event Listener für vorherige Woche
+        document.getElementById('prevWeek').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() - 7);
+            initCalendar(); // Kalender aktualisieren
+        });
+
+        // Event Listener für nächste Woche
+        document.getElementById('nextWeek').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() + 7);
+            initCalendar(); // Kalender aktualisieren
+        });
+
+        // Event Listener für Raumwechsel
+        document.getElementById('roomSelect').addEventListener('change', () => {
+            currentDate = new Date(); // Setze das aktuelle Datum zurück, falls gewünscht
+            initCalendar(); // Kalender aktualisieren bei Raumwechsel
+        });
+
+        // Diese Funktion aktualisiert die Rauminformationen.
+        function updateRoomDetails() {
+            const roomSelect = document.getElementById('roomSelect');
+            const maxParticipantsElement = document.getElementById('maxParticipants');
+            const selectedRoom = roomSelect.value;
+
+            // Die maximale Teilnehmerzahl je nach gewähltem Raum anpassen
+            switch (selectedRoom) {
+                case '1':
+                case '2':
+                    maxParticipantsElement.textContent = '8'; // Setze max Teilnehmer für Raum 1 und 2
+                    break;
+                case '3':
+                    maxParticipantsElement.textContent = '6'; // Setze max Teilnehmer für Raum 3
+                    break;
+                default:
+                    maxParticipantsElement.textContent = '0'; // Fall für Fehlerbehandlung
+            }
+
+            // Setzen der maximalen Teilnehmerzahl im Input-Feld
+            document.getElementById('participants').max = maxParticipantsElement.textContent; // Maximalwert setzen
+        }
+
+        initCalendar(); // Initialisiere den Kalender beim Laden der Seite
+    </script>
+</body>
+</html>
